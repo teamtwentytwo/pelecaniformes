@@ -1,4 +1,4 @@
-%order   family  genus   species 
+%order   family  genus   species
 /*pelecaniformes
         pelecanidae
                 pelecanus (pelican)
@@ -96,11 +96,19 @@ hasCompoundName(G,S,N) :- speciesNameInfo(G, S, _), atom_concat(G,'_', X), atom_
 isaStrict(A, B) :- A = B, (order(B) ; family(B) ; genus(B) ; hasCompoundName(_,_,B)).
 isaStrict(A, B) :- hasParent2(A, X), isaStrict(X, B).
 
-%isa(A,B) :-   .
+isa(A,B) :-   atomic(A), atomic(B), hasCommonName(X, A), hasCommonName(Y,B), isaStrict(X,Y).
+isa(A,B) :-   atomic(A), hasCommonName(X, A), isaStrict(X,B).
+isa(A,B) :-   atomic(B), hasCommonName(Y,B), isaStrict(A,Y).
+isa(A,B) :-   isaStrict(A,B).
+
 
 synonym(A, B) :- (hasCommonName(A, B) ; hasCommonName(B, A) ; (hasCommonName(X, A), hasCommonName(X, B))),A \= B.
 
-%countSpecies :- .
+countSpecies(A, N) :- var(N), hasCompoundName(G, S, A), species(S), genus(G), N is 1.
+countSpecies(A, N) :- var(N), genus(A), setof(X, hasParent(X,A), L), length(L, N).
+countSpecies(A, N) :- var(N), family(A), setof(X, (hasParent(Y,A), hasParent(X, Y)), L), length(L, N).
+countSpecies(A, N) :- var(N), order(A).
+countSpecies(A, N) :- var(N), \+ (hasCommonName(_,_,A); genus(A); family(A); order(A)), N is 0.
 
 rangesTo(pelecanus_erythrorhynchos, alberta).
 rangesTo(botaurus_lentiginosus, alberta).
@@ -111,7 +119,7 @@ rangesTo(butorides_virescens, canada).
 rangesTo(nycticorax_nycticorax, alberta).
 
 rangesTo(A, canada) :- rangesTo(A, alberta).
-rangesTo(A, P) :- \+hasCompoundName(_,_, A), hasParent2(B,A) , rangesTo(B, P). 
+rangesTo(A, P) :- \+hasCompoundName(_,_, A), hasParent2(B,A) , rangesTo(B, P).
 /*
 %birdInfo(name, habitat, food, nesting, behavior, conservation)
 birdInfo(americanWhitePelican, lakePond, fish, ground, surfaceDive, lc).
@@ -147,4 +155,3 @@ behavior(A, B) :- \+hasCompoundName(_,_,A), hasParent2(X, A), behavior(X,B).
 
 conservation(A, C) :- hasCompoundName(_, X, A), speciesBirdInfo(X, _, _, _, _, C).
 conservation(A, C) :- \+hasCompoundName(_,_,A), hasParent2(X, A), conservation(X,C).
-
