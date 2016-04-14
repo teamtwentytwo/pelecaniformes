@@ -96,19 +96,24 @@ hasCompoundName(G,S,N) :- speciesNameInfo(G, S, _), atom_concat(G,'_', X), atom_
 isaStrict(A, B) :- A = B, (order(B) ; family(B) ; genus(B) ; hasCompoundName(_,_,B)).
 isaStrict(A, B) :- hasParent2(A, X), isaStrict(X, B).
 
-isa(A,B) :-   atomic(A), atomic(B), hasCommonName(X, A), hasCommonName(Y,B), isaStrict(X,Y).
-isa(A,B) :-   atomic(A), hasCommonName(X, A), isaStrict(X,B).
-isa(A,B) :-   atomic(B), hasCommonName(Y,B), isaStrict(A,Y).
-isa(A,B) :-   isaStrict(A,B).
-
+isa(A,B) :-  atomic(A), atomic(B), hasCommonName(X, A), hasCommonName(Y,B), isaStrict(X,Y).
+isa(A,B) :-  atomic(A), hasCommonName(X, A), isaStrict(X,B).
+isa(A,B) :-  atomic(B), hasCommonName(Y,B), isaStrict(A,Y).
+isa(A,B) :-  isaStrict(A,B).
 
 synonym(A, B) :- (hasCommonName(A, B) ; hasCommonName(B, A) ; (hasCommonName(X, A), hasCommonName(X, B))),A \= B.
 
-countSpecies(A, N) :- var(N), hasCompoundName(G, S, A), species(S), genus(G), N is 1.
-countSpecies(A, N) :- var(N), genus(A), setof(X, hasParent(X,A), L), length(L, N).
-countSpecies(A, N) :- var(N), family(A), setof(X, (hasParent(Y,A), hasParent(X, Y)), L), length(L, N).
-countSpecies(A, N) :- var(N), order(A).
-countSpecies(A, N) :- var(N), \+ (hasCommonName(_,_,A); genus(A); family(A); order(A)), N is 0.
+countSpecies(A, N) :- listSpecies(A, L), length(L, N).
+countSpecies(A, N) :- \+ listSpecies(A, _), N is 0.
+
+listSpecies(A, [A]) :- hasCompoundName(G, S, A), species(S), genus(G).
+listSpecies(A, L) :- genus(A), setof(X, hasSpecies(A, X), L).
+listSpecies(A, L) :- family(A), setof(X, hasSpecies(A, X), L).
+listSpecies(A, L) :- order(A), setof(X, hasSpecies(A, X), L).
+
+hasSpecies(G, S) :- genus(G), hasParent2(S, G).
+hasSpecies(F, S) :- family(F), hasParent2(G, F), hasParent2(S, G).
+hasSpecies(O, S) :- order(O), hasParent2(F, O), hasParent2(G, F), hasParent2(S, G).
 
 rangesTo(pelecanus_erythrorhynchos, alberta).
 rangesTo(botaurus_lentiginosus, alberta).
